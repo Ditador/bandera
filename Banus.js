@@ -17,7 +17,7 @@ var maxYimg;
 var zise = 500;
 
 function preload() {
-    img = loadImage('Bandeira_Astro-Hungara.png');
+    img = loadImage('Patrocinadores.png');
 }
 
 function setup() {
@@ -39,16 +39,47 @@ function setup() {
     bol = {
         x: width/2,
         y: height/2,
+        fx: width/2,
+        fy: height/2,
         w: zise,
         h: zise,
         min: 2,
         cor: color(0),
+        velox: 0,
+        veloy: 0,
+        movendo: function() {
+            return !(this.x == this.fx && this.y == this.fy);
+        },
         getColor: function() {
-            x = map(this.x, minX, maxX, minXimg, maxXimg);
-            y = map(this.y, minY, maxY, minYimg, maxYimg);
+            x = map(this.fx, minX, maxX, minXimg, maxXimg);
+            y = map(this.fy, minY, maxY, minYimg, maxYimg);
             this.cor = color(img.get(x,y));
         },
-        split: function() {
+        animarCima:function() {
+            this.x += (this.fx -this.x) *0.05;
+            this.y += (this.fy -this.y) *0.05;
+        },
+        animarBaxu: function() {
+            if(this.x != this.fx){
+                if (abs(this.fx - this.x) < abs(this.velox)) {
+                    this.x = this.fx;
+                } else {
+                    this.x += this.velox;
+                }
+            }
+            if(this.x != this.fy){
+                if (abs(this.fy - this.y) < abs(this.veloy)) {
+                    this.y = this.fy;
+                } else {
+                    this.y += this.veloy;
+                }
+            }
+        },
+        getVelo() {
+            this.velox = (this.fx - this.x) / 30;
+            this.veloy = (this.fy - this.y) / 30;
+        },
+        split:function() {
             w = this.w / 2;
             h = this.h / 2;
             if ( w < this.min ) {
@@ -60,20 +91,22 @@ function setup() {
                 bols.push(Object.create(bol));
                 bols[i].w = w;
                 bols[i].h = h;
+                bols[i].x = this.x;
+                bols[i].y = this.y;
             }
-            bols[0].x = this.x-w/2;
-            bols[0].y = this.y-h/2;
-            bols[1].x = this.x+w/2;
-            bols[1].y = this.y-h/2;
-            bols[2].x = this.x-w/2;
-            bols[2].y = this.y+h/2;
-            bols[3].x = this.x+w/2;
-            bols[3].y = this.y+h/2;            
-            bols[0].getColor();
-            bols[1].getColor();
-            bols[2].getColor();
-            bols[3].getColor();
-
+            bols[0].fx = this.x-w/2;
+            bols[0].fy = this.y-h/2;
+            bols[1].fx = this.x+w/2;
+            bols[1].fy = this.y-h/2;
+            bols[2].fx = this.x-w/2;
+            bols[2].fy = this.y+h/2;
+            bols[3].fx = this.x+w/2;
+            bols[3].fy = this.y+h/2;  
+    
+            for(i=0;i<4;i++) {
+                bols[i].getColor();
+                bols[i].getVelo();
+            }
             
             return bols;
         }
@@ -95,13 +128,16 @@ function draw() {
         } else {
             noStroke();
         }
+        b.animarBaxu();
         ellipse(b.x,b.y,b.w,b.h);
         
-        if (dist(mouseXant, mouseYant,b.x,b.y) > b.w / 2) {
-            if (dist(mouseX, mouseY,b.x,b.y) < b.w / 2) {
-                novas = b.split();
-                bols.splice(i,1);
-                Array.prototype.push.apply(bols,novas);
+        if (!b.movendo()) {
+            if (dist(mouseXant, mouseYant,b.x,b.y) > b.w / 2) {
+                if (dist(mouseX, mouseY,b.x,b.y) < b.w / 2) {
+                    novas = b.split();
+                    bols.splice(i,1);
+                    Array.prototype.push.apply(bols,novas);
+                }
             }
         }
     }
@@ -115,8 +151,8 @@ function dist(ax, ay, bx, by) {
 }
 
 function similarColor(cor_a, cor_b) {
-    let a = cor_a.levels
-    let b = cor_b.levels
+    let a = cor_a.levels;
+    let b = cor_b.levels;
     
     for(let i = 0; i < 4; i++) {
         if(abs(a[i] - b[i]) > 20) {
